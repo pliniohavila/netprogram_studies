@@ -6,7 +6,7 @@ Introudução ao estudos de _socket programming_ com a linguagem C em ambientes 
 
 ## struct addrinfo
 
-Utilizada para representar endereçs de redes ou de conexão. 
+Utilizada para representar endereços de redes ou de conexão. 
 
 ```c
 struct addrinfo {
@@ -75,7 +75,7 @@ struct in6_addr {
 };
 ```
 
-# Funções 
+# Funções / Syscalls 
 
 ## getaddrinfo()
 
@@ -107,3 +107,87 @@ Funções auxiliares:
 void freeaddrinfo(struct addrinfo *res);
 const char *gai_strerror(int errcode);
 ```
+
+## socket()
+
+Para obter uma `socket descriptor`. 
+> socket() creates an endpoint for communication and returns a file descriptor that refers to that endpoint.
+
+```c 
+#include <sys/types.h>
+#include <sys/socket.h>
+
+int socket(int domain, int type, int protocol); 
+```
+
+`int domain`: The domain argument determines the nature of the communication, including the address format: AF_INET IPv4 Internet domain
+AF_INET6, AF_UNIX UNIX domain, AF_UNSPEC
+`int type`: The type argument determines the type of the socket, which further determines the communication characteristics: SOCK_STREAM, SOCK_DGRAM
+`int protocol`: The protocol argument is usually zero, to select the default protocol for the given domain and socket type
+
+fonte: advanced programming in the unix environment 
+
+## setsockopt
+
+Define opções do socket
+
+```c
+#include <sys/types.h>       
+#include <sys/socket.h>
+
+int getsockopt(int sockfd, int level, int optname,
+                void *optval, socklen_t *optlen);
+int setsockopt(int sockfd, int level, int optname,
+                const void *optval, socklen_t optlen);
+```
+
+## bind()
+
+Para associar uma socket a uma porta. 
+
+```c
+#include <sys/types.h>
+#include <sys/socket.h>
+
+int bind(int sockfd, struct sockaddr *my_addr, int addrlen);
+```
+
+## connect()
+
+```c
+#include <sys/types.h>
+#include <sys/socket.h>
+
+int connect(int sockfd, struct sockaddr *serv_addr, int addrlen); 
+```
+
+## listen()
+
+A server announces that it is willing to accept connect requests by calling the
+listen function.
+
+```c
+#include <sys/types.h>         
+#include <sys/socket.h>
+
+int listen(int sockfd, int backlog);
+```
+
+The backlog argument provides a hint to the system regarding the number of
+outstanding connect requests that it should enqueue on behalf of the process
+
+## accept()
+Once the queue is full, the system will reject additional connect requests, so the
+backlog value must be chosen based on the expected load of the server and the amount
+of processing it must do to accept a connect request and start the service.
+
+```c 
+#include <sys/types.h>          
+#include <sys/socket.h>
+
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+```
+
+## send() and recv()
+
+## close() and shutdown()
