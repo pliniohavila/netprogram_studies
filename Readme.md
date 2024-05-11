@@ -1,6 +1,6 @@
-#Notas de Estudos do Beej's Guide to Network Programming
+# Notas de Estudos do Beej's Guide to Network Programming
 
-Introudução ao estudos de _socket programming_ com a linguagem C em ambientes Linux.
+Introdução ao estudos de _socket programming_ com a linguagem C em ambientes Linux.
 
 # Estruturas de dados 
 
