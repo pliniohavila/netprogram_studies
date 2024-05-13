@@ -13,6 +13,7 @@ int     main(void)
     printf("Hit RETURN or wait 2.5 seconds for timeout\n");
 
     num_events = poll(pfds, 1, 2500);
+    printf("num_events: %d", num_events);
 
     if (num_events == 0)
     {

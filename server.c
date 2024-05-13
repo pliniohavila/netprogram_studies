@@ -15,7 +15,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 
-#define PORT    "3490"
+#define PORT    "9034"
 #define BACKLOG 10
 
 void    sigchld_handler(int s);

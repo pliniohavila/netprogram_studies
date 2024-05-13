@@ -37,7 +37,7 @@ int         get_listener_socket(void)
     rv = getaddrinfo(NULL, PORT, &hints, &ai);
     if (rv != 0)
     {
-        fprintf(stderr, "server: %s\n", gai_strerror(rv))
+        fprintf(stderr, "server: %s\n", gai_strerror(rv));
         exit(1);
     }
     for (p = ai; p != NULL; p->ai_next)
@@ -45,7 +45,7 @@ int         get_listener_socket(void)
         listener = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
         if (listener < 0)
             continue;
-        setsockopt(listener, SOL_SOCKET, SOL_REUSEADDR, &yes, sizeof(int));
+        setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
 
         if (bind(listener, p->ai_addr, p->ai_addrlen) < 0)
         {
@@ -76,7 +76,7 @@ void        add_to_pfds(struct pollfd *pfds[], int newfd, int *fd_count, int *fd
     (*fd_count)++;
 }
 
-void        del_from_pfds(struct pollfd *pfds[], int i, int *fd_count)
+void        del_from_pfds(struct pollfd pfds[], int i, int *fd_count)
 {
     pfds[i] = pfds[*fd_count - 1];
     (*fd_count)--;
@@ -117,7 +117,62 @@ int         main(void)
             perror("poll");
             exit(1);
         }
-    }
+        // Run through the existing connections looking for data to read
+        for (int i = 0; i < fd_count; i++)
+        {
+            // Check if someone's ready to read
+            if (pfds[i].revents & POLLIN)
+            {
+                if (pfds[i].fd == listener)
+                {
+                      // If listener is ready to read, handle new connection
+                    addrlen = sizeof(remoteaddr);
+                    newfd = accept(listener, (struct sockaddr*)&remoteaddr, &addrlen);
+                    if (newfd == -1)
+                    {
+                        perror("accept");
+                    }
+                    else 
+                    {
+                        add_to_pfds(&pfds, newfd, &fd_count, &fd_size);
+                        inet_ntop(remoteaddr.ss_family, get_in_addr((struct sockaddr*)&remoteaddr),
+                            remoteIP, INET6_ADDRSTRLEN);
+                        printf("pollserver: new connection from %s on socket %d\n", remoteIP, newfd);
+                        if (send(newfd, "Hello, world!", 13, 0) == -1)
+                            perror("send");
+                    }
+                }
+                else
+                {
+                    // If not the listener, we're just a regular client
+                    int nbytes = recv(pfds[i].fd, buf, sizeof(buf), 0);
+                    int sender_fd = pfds[i].fd;
 
+                    if (nbytes <= 0)
+                    {
+                        if (nbytes == 0)
+                            printf("pollserver: socket %d hung up\n", sender_fd);
+                        else 
+                            perror("recv");
+                        close(pfds[i].fd);
+                        del_from_pfds(pfds, i, &fd_count);
+                    }
+                    else 
+                    {
+                         // We got some good data from a client
+                        for (int j = 0; j < fd_count; j++)
+                        {
+                            int dest_fd = pfds[j].fd;
+                            if (dest_fd != listener && dest_fd != sender_fd)
+                            {
+                                if (send(dest_fd, buf, nbytes, 0) == -1)
+                                    perror("send");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } // END while
     return (0);
 }
